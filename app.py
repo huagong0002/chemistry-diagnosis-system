@@ -439,8 +439,7 @@ def show_login_page():
     with col2:
         # 品牌区域 - st.html() 渲染
         brand_html = '''<div style="text-align:center;margin-bottom:35px;position:relative;z-index:1;">
-<div style="display:inline-block;width:80px;height:80px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:20px;margin-bottom:20px;box-shadow:0 0 40px rgba(139,92,246,0.4);display:flex;align-items:center;justify-content:center;"><span style="color:white;font-size:42px;font-weight:900;font-family:'Microsoft YaHei','PingFang SC',sans-serif;text-shadow:0 2px 8px rgba(0,0,0,0.2);">知</span></div>
-<h1 style="color:#ffffff;font-size:52px;font-weight:900;margin:0 0 8px 0;letter-spacing:12px;text-shadow:0 0 40px rgba(139,92,246,0.6),0 4px 8px rgba(0,0,0,0.3);background:linear-gradient(90deg,#a5b4fc,#c084fc,#f9a8d4,#c084fc,#a5b4fc);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">知错AI</h1>
+<h1 style="color:#ffffff;font-size:56px;font-weight:900;margin:0 0 8px 0;letter-spacing:12px;text-shadow:0 0 40px rgba(139,92,246,0.6),0 4px 8px rgba(0,0,0,0.3);background:linear-gradient(90deg,#a5b4fc,#c084fc,#f9a8d4,#c084fc,#a5b4fc);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">知错AI</h1>
 <p style="color:rgba(255,255,255,0.85);font-size:17px;font-weight:300;margin:0 0 16px 0;letter-spacing:2px;">高中化学错题智能诊断与个性化练习系统</p>
 <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(99,102,241,0.15);border:1px solid rgba(139,92,246,0.3);padding:6px 20px;border-radius:30px;margin-bottom:16px;">
 <span style="display:inline-block;width:6px;height:6px;background:#34d399;border-radius:50%;"></span>
@@ -831,13 +830,32 @@ if page == "🏠 首页":
         st.metric("学生总数", len(students))
     
     with col2:
-        questions = db.get_questions(limit=1000)
-        st.metric("题库数量", len(questions))
-    
+        # 题库数量：合并 questions（手动录入）+ question_bank（AI生成）
+        manual_questions = db.get_questions(limit=1000)
+        bank_questions = db.get_bank_questions(limit=10000)
+        st.metric("题库数量", len(manual_questions) + len(bank_questions))
+
     with col3:
+        # 答题记录：合并 student_answers + practice_history
         if students:
-            total_answers = sum(len(db.get_student_answers(s['id'])) for s in students[:10])
+            total_answers = sum(len(db.get_student_answers(s['id'])) for s in students[:50])
+            # 补充 practice_history 中的记录
+            with db.get_connection() as conn:
+                cursor = conn.cursor()
+                if is_admin():
+                    cursor.execute('SELECT COUNT(*) as cnt FROM practice_history')
+                else:
+                    student_ids = [s['id'] for s in students[:50]]
+                    if student_ids:
+                        placeholders = ','.join(['?'] * len(student_ids))
+                        cursor.execute(f'SELECT COUNT(*) as cnt FROM practice_history WHERE student_id IN ({placeholders})', student_ids)
+                    else:
+                        cursor.execute('SELECT 0 as cnt')
+                row = cursor.fetchone()
+                total_answers += row['cnt'] if row else 0
             st.metric("答题记录", total_answers)
+        else:
+            st.metric("答题记录", 0)
     
     with col4:
         st.metric("知识点覆盖", len(get_kp()))
