@@ -403,6 +403,18 @@ def show_login_page():
         transform: translateY(-2px);
         box-shadow: 0 10px 30px rgba(139,92,246,0.5);
     }
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(5deg); }
+    }
+    @keyframes shine {
+        0% { background-position: 200% center; }
+        100% { background-position: -200% center; }
+    }
+    @keyframes pulse-dot {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(0.8); }
+    }
     </style>
     ''', unsafe_allow_html=True)
 
@@ -449,13 +461,6 @@ def show_login_page():
             <line x1="50" y1="38" x2="50" y2="28" stroke="#6366f1" stroke-width="2"/>
             <line x1="50" y1="62" x2="50" y2="72" stroke="#6366f1" stroke-width="2"/>
         </svg>
-        
-        <style>
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(5deg); }
-        }
-        </style>
     </div>'''
     st.markdown(bg_html, unsafe_allow_html=True)
 
@@ -486,17 +491,6 @@ def show_login_page():
                 <span style="display: inline-block; width: 36px; height: 36px; background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.3); border-radius: 8px; color: #c084fc; font-size: 14px; font-weight: 700; line-height: 36px; text-align: center;">Na</span>
                 <span style="display: inline-block; width: 36px; height: 36px; background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.3); border-radius: 8px; color: #d8b4fe; font-size: 14px; font-weight: 700; line-height: 36px; text-align: center;">Cl</span>
             </div>
-            
-            <style>
-            @keyframes shine {
-                0% { background-position: 200% center; }
-                100% { background-position: -200% center; }
-            }
-            @keyframes pulse-dot {
-                0%, 100% { opacity: 1; transform: scale(1); }
-                50% { opacity: 0.5; transform: scale(0.8); }
-            }
-            </style>
         </div>'''
         st.markdown(brand_html, unsafe_allow_html=True)
 
