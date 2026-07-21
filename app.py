@@ -366,150 +366,111 @@ def get_accessible_classes():
 
 def show_login_page():
     """显示登录页面 - 全屏沉浸式AI科技风格"""
-    # 页面整体样式 - 全屏深色背景 + 化学分子网格图案
-    st.markdown('''
+    # 页面整体样式 - 修改Streamlit原生组件样式
+    st.markdown("""
     <style>
     .stApp {
-        background:
-            radial-gradient(ellipse at 20% 50%, rgba(99,102,241,0.08) 0%, transparent 50%),
+        background: radial-gradient(ellipse at 20% 50%, rgba(99,102,241,0.08) 0%, transparent 50%),
             radial-gradient(ellipse at 80% 50%, rgba(139,92,246,0.08) 0%, transparent 50%),
             radial-gradient(ellipse at 50% 100%, rgba(168,85,247,0.05) 0%, transparent 50%),
-            linear-gradient(180deg, #070a1f 0%, #0d1033 40%, #12153d 70%, #0a0e27 100%);
-        background-attachment: fixed;
+            linear-gradient(180deg, #070a1f 0%, #0d1033 40%, #12153d 70%, #0a0e27 100%) !important;
+        background-attachment: fixed !important;
     }
     .stTextInput > div > div > input {
-        background-color: rgba(255,255,255,0.97);
-        border-radius: 12px;
-        border: 2px solid rgba(99,102,241,0.3);
-        transition: all 0.3s ease;
-        font-size: 15px;
-        padding: 12px 16px;
-    }
-    .stTextInput > div > div > input:focus {
-        border-color: #8b5cf6;
-        box-shadow: 0 0 20px rgba(139,92,246,0.25);
+        background-color: rgba(255,255,255,0.97) !important;
+        border-radius: 12px !important;
+        border: 2px solid rgba(99,102,241,0.3) !important;
+        font-size: 15px !important;
+        padding: 12px 16px !important;
     }
     .stButton > button {
-        background: linear-gradient(90deg, #6366f1, #8b5cf6, #a855f7);
-        border: none;
-        border-radius: 12px;
-        font-weight: 700;
-        letter-spacing: 3px;
-        font-size: 16px;
-        padding: 12px 0;
-        transition: all 0.3s ease;
-    }
-    .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 30px rgba(139,92,246,0.5);
-    }
-    @keyframes float {
-        0%, 100% { transform: translateY(0px) rotate(0deg); }
-        50% { transform: translateY(-20px) rotate(5deg); }
-    }
-    @keyframes shine {
-        0% { background-position: 200% center; }
-        100% { background-position: -200% center; }
-    }
-    @keyframes pulse-dot {
-        0%, 100% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.5; transform: scale(0.8); }
+        background: linear-gradient(90deg, #6366f1, #8b5cf6, #a855f7) !important;
+        border: none !important;
+        border-radius: 12px !important;
+        font-weight: 700 !important;
+        letter-spacing: 3px !important;
+        font-size: 16px !important;
     }
     </style>
-    ''', unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-    # 全屏背景装饰层 - 化学分子结构 + 浮动元素
-    bg_html = '''<div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; overflow: hidden;">
-        <svg width="100%" height="100%" style="position: absolute; opacity: 0.04;">
-            <defs>
-                <pattern id="hex" width="60" height="104" patternUnits="userSpaceOnUse">
-                    <path d="M30 0 L60 17.3 L60 52 L30 69.3 L0 52 L0 17.3 Z" fill="none" stroke="#6366f1" stroke-width="1"/>
-                </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#hex)"/>
-        </svg>
+    # 使用 st.html() 渲染装饰性内容（绕过markdown解析器，避免文本化问题）
+    bg_html = '''<div style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden;">
+<svg width="100%" height="100%" style="position:absolute;opacity:0.04;">
+<defs><pattern id="hex" width="60" height="104" patternUnits="userSpaceOnUse">
+<path d="M30 0 L60 17.3 L60 52 L30 69.3 L0 52 L0 17.3 Z" fill="none" stroke="#6366f1" stroke-width="1"/>
+</pattern></defs>
+<rect width="100%" height="100%" fill="url(#hex)"/>
+</svg>
+<div style="position:absolute;top:8%;left:5%;font-size:64px;color:rgba(99,102,241,0.12);font-weight:900;">H</div>
+<div style="position:absolute;top:15%;right:8%;font-size:48px;color:rgba(139,92,246,0.1);font-weight:900;">C</div>
+<div style="position:absolute;top:35%;left:3%;font-size:56px;color:rgba(168,85,247,0.09);font-weight:900;">O</div>
+<div style="position:absolute;top:60%;right:5%;font-size:52px;color:rgba(99,102,241,0.1);font-weight:900;">N</div>
+<div style="position:absolute;top:75%;left:8%;font-size:44px;color:rgba(139,92,246,0.08);font-weight:900;">Na</div>
+<div style="position:absolute;top:85%;right:12%;font-size:40px;color:rgba(168,85,247,0.1);font-weight:900;">Cl</div>
+<div style="position:absolute;top:45%;left:12%;font-size:36px;color:rgba(99,102,241,0.07);font-weight:900;">Fe</div>
+<div style="position:absolute;top:25%;right:15%;font-size:42px;color:rgba(139,92,246,0.08);font-weight:900;">S</div>
+<svg style="position:absolute;top:20%;left:15%;opacity:0.06;" width="120" height="120" viewBox="0 0 120 120">
+<circle cx="60" cy="60" r="20" fill="#6366f1"/><circle cx="30" cy="30" r="12" fill="#8b5cf6"/>
+<circle cx="90" cy="30" r="12" fill="#a855f7"/><circle cx="30" cy="90" r="12" fill="#8b5cf6"/>
+<circle cx="90" cy="90" r="12" fill="#a855f7"/>
+<line x1="48" y1="48" x2="38" y2="38" stroke="#6366f1" stroke-width="2"/>
+<line x1="72" y1="48" x2="82" y2="38" stroke="#6366f1" stroke-width="2"/>
+<line x1="48" y1="72" x2="38" y2="82" stroke="#6366f1" stroke-width="2"/>
+<line x1="72" y1="72" x2="82" y2="82" stroke="#6366f1" stroke-width="2"/>
+</svg>
+<svg style="position:absolute;bottom:25%;right:18%;opacity:0.05;" width="100" height="100" viewBox="0 0 100 100">
+<circle cx="50" cy="50" r="18" fill="#6366f1"/><circle cx="20" cy="50" r="10" fill="#8b5cf6"/>
+<circle cx="80" cy="50" r="10" fill="#a855f7"/><circle cx="50" cy="20" r="10" fill="#8b5cf6"/>
+<circle cx="50" cy="80" r="10" fill="#a855f7"/>
+<line x1="38" y1="50" x2="28" y2="50" stroke="#6366f1" stroke-width="2"/>
+<line x1="62" y1="50" x2="72" y2="50" stroke="#6366f1" stroke-width="2"/>
+<line x1="50" y1="38" x2="50" y2="28" stroke="#6366f1" stroke-width="2"/>
+<line x1="50" y1="62" x2="50" y2="72" stroke="#6366f1" stroke-width="2"/>
+</svg>
+</div>'''
+    st.html(bg_html)
 
-        <div style="position: absolute; top: 8%; left: 5%; font-size: 64px; color: rgba(99,102,241,0.12); font-weight: 900; animation: float 8s ease-in-out infinite;">H</div>
-        <div style="position: absolute; top: 15%; right: 8%; font-size: 48px; color: rgba(139,92,246,0.1); font-weight: 900; animation: float 10s ease-in-out infinite 1s;">C</div>
-        <div style="position: absolute; top: 35%; left: 3%; font-size: 56px; color: rgba(168,85,247,0.09); font-weight: 900; animation: float 9s ease-in-out infinite 2s;">O</div>
-        <div style="position: absolute; top: 60%; right: 5%; font-size: 52px; color: rgba(99,102,241,0.1); font-weight: 900; animation: float 11s ease-in-out infinite 0.5s;">N</div>
-        <div style="position: absolute; top: 75%; left: 8%; font-size: 44px; color: rgba(139,92,246,0.08); font-weight: 900; animation: float 7s ease-in-out infinite 1.5s;">Na</div>
-        <div style="position: absolute; top: 85%; right: 12%; font-size: 40px; color: rgba(168,85,247,0.1); font-weight: 900; animation: float 12s ease-in-out infinite 3s;">Cl</div>
-        <div style="position: absolute; top: 45%; left: 12%; font-size: 36px; color: rgba(99,102,241,0.07); font-weight: 900; animation: float 9s ease-in-out infinite 2.5s;">Fe</div>
-        <div style="position: absolute; top: 25%; right: 15%; font-size: 42px; color: rgba(139,92,246,0.08); font-weight: 900; animation: float 8s ease-in-out infinite 4s;">S</div>
+    # 垂直间距
+    st.html("<div style='height:6vh;'></div>")
 
-        <svg style="position: absolute; top: 20%; left: 15%; opacity: 0.06;" width="120" height="120" viewBox="0 0 120 120">
-            <circle cx="60" cy="60" r="20" fill="#6366f1"/>
-            <circle cx="30" cy="30" r="12" fill="#8b5cf6"/>
-            <circle cx="90" cy="30" r="12" fill="#a855f7"/>
-            <circle cx="30" cy="90" r="12" fill="#8b5cf6"/>
-            <circle cx="90" cy="90" r="12" fill="#a855f7"/>
-            <line x1="48" y1="48" x2="38" y2="38" stroke="#6366f1" stroke-width="2"/>
-            <line x1="72" y1="48" x2="82" y2="38" stroke="#6366f1" stroke-width="2"/>
-            <line x1="48" y1="72" x2="38" y2="82" stroke="#6366f1" stroke-width="2"/>
-            <line x1="72" y1="72" x2="82" y2="82" stroke="#6366f1" stroke-width="2"/>
-        </svg>
-        
-        <svg style="position: absolute; bottom: 25%; right: 18%; opacity: 0.05;" width="100" height="100" viewBox="0 0 100 100">
-            <circle cx="50" cy="50" r="18" fill="#6366f1"/>
-            <circle cx="20" cy="50" r="10" fill="#8b5cf6"/>
-            <circle cx="80" cy="50" r="10" fill="#a855f7"/>
-            <circle cx="50" cy="20" r="10" fill="#8b5cf6"/>
-            <circle cx="50" cy="80" r="10" fill="#a855f7"/>
-            <line x1="38" y1="50" x2="28" y2="50" stroke="#6366f1" stroke-width="2"/>
-            <line x1="62" y1="50" x2="72" y2="50" stroke="#6366f1" stroke-width="2"/>
-            <line x1="50" y1="38" x2="50" y2="28" stroke="#6366f1" stroke-width="2"/>
-            <line x1="50" y1="62" x2="50" y2="72" stroke="#6366f1" stroke-width="2"/>
-        </svg>
-    </div>'''
-    st.markdown(bg_html, unsafe_allow_html=True)
-
-    # 主内容区 - 垂直居中布局
-    st.markdown("<div style='height: 6vh;'></div>", unsafe_allow_html=True)
-
-    # 使用更宽的中间列，适配宽屏
+    # 中间列布局
     col1, col2, col3 = st.columns([1, 1.6, 1])
     with col2:
-        # ====== 品牌区域 ======
-        brand_html = '''<div style="text-align: center; margin-bottom: 35px; position: relative; z-index: 1;">
-            <div style="display: inline-block; width: 80px; height: 80px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 20px; margin-bottom: 20px; box-shadow: 0 0 40px rgba(139,92,246,0.4); display: flex; align-items: center; justify-content: center; font-size: 40px;">🤖</div>
-            
-            <h1 style="color: #ffffff; font-size: 52px; font-weight: 900; margin: 0 0 8px 0; letter-spacing: 12px; text-shadow: 0 0 40px rgba(139,92,246,0.6), 0 4px 8px rgba(0,0,0,0.3); background: linear-gradient(90deg, #a5b4fc, #c084fc, #f9a8d4, #c084fc, #a5b4fc); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: shine 3s linear infinite;">知错AI</h1>
-            
-            <p style="color: rgba(255,255,255,0.85); font-size: 17px; font-weight: 300; margin: 0 0 16px 0; letter-spacing: 2px;">高中化学错题智能诊断与个性化练习系统</p>
-            
-            <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(99,102,241,0.15); border: 1px solid rgba(139,92,246,0.3); padding: 6px 20px; border-radius: 30px; margin-bottom: 16px;">
-                <span style="display: inline-block; width: 6px; height: 6px; background: #34d399; border-radius: 50%; animation: pulse-dot 2s ease-in-out infinite;"></span>
-                <span style="color: #a5b4fc; font-size: 12px; font-weight: 500; letter-spacing: 2px;">AI POWERED · INTELLIGENT DIAGNOSIS</span>
-            </div>
-            
-            <div style="display: flex; justify-content: center; gap: 20px; margin-top: 8px;">
-                <span style="display: inline-block; width: 36px; height: 36px; background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3); border-radius: 8px; color: #818cf8; font-size: 14px; font-weight: 700; line-height: 36px; text-align: center;">H</span>
-                <span style="display: inline-block; width: 36px; height: 36px; background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.3); border-radius: 8px; color: #c084fc; font-size: 14px; font-weight: 700; line-height: 36px; text-align: center;">C</span>
-                <span style="display: inline-block; width: 36px; height: 36px; background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.3); border-radius: 8px; color: #d8b4fe; font-size: 14px; font-weight: 700; line-height: 36px; text-align: center;">O</span>
-                <span style="display: inline-block; width: 36px; height: 36px; background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3); border-radius: 8px; color: #a5b4fc; font-size: 14px; font-weight: 700; line-height: 36px; text-align: center;">N</span>
-                <span style="display: inline-block; width: 36px; height: 36px; background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.3); border-radius: 8px; color: #c084fc; font-size: 14px; font-weight: 700; line-height: 36px; text-align: center;">Na</span>
-                <span style="display: inline-block; width: 36px; height: 36px; background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.3); border-radius: 8px; color: #d8b4fe; font-size: 14px; font-weight: 700; line-height: 36px; text-align: center;">Cl</span>
-            </div>
-        </div>'''
-        st.markdown(brand_html, unsafe_allow_html=True)
+        # 品牌区域 - st.html() 渲染
+        brand_html = '''<div style="text-align:center;margin-bottom:35px;position:relative;z-index:1;">
+<div style="display:inline-block;width:80px;height:80px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:20px;margin-bottom:20px;box-shadow:0 0 40px rgba(139,92,246,0.4);display:flex;align-items:center;justify-content:center;font-size:40px;">🤖</div>
+<h1 style="color:#ffffff;font-size:52px;font-weight:900;margin:0 0 8px 0;letter-spacing:12px;text-shadow:0 0 40px rgba(139,92,246,0.6),0 4px 8px rgba(0,0,0,0.3);background:linear-gradient(90deg,#a5b4fc,#c084fc,#f9a8d4,#c084fc,#a5b4fc);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">知错AI</h1>
+<p style="color:rgba(255,255,255,0.85);font-size:17px;font-weight:300;margin:0 0 16px 0;letter-spacing:2px;">高中化学错题智能诊断与个性化练习系统</p>
+<div style="display:inline-flex;align-items:center;gap:8px;background:rgba(99,102,241,0.15);border:1px solid rgba(139,92,246,0.3);padding:6px 20px;border-radius:30px;margin-bottom:16px;">
+<span style="display:inline-block;width:6px;height:6px;background:#34d399;border-radius:50%;"></span>
+<span style="color:#a5b4fc;font-size:12px;font-weight:500;letter-spacing:2px;">AI POWERED · INTELLIGENT DIAGNOSIS</span>
+</div>
+<div style="display:flex;justify-content:center;gap:20px;margin-top:8px;">
+<span style="display:inline-block;width:36px;height:36px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);border-radius:8px;color:#818cf8;font-size:14px;font-weight:700;line-height:36px;text-align:center;">H</span>
+<span style="display:inline-block;width:36px;height:36px;background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.3);border-radius:8px;color:#c084fc;font-size:14px;font-weight:700;line-height:36px;text-align:center;">C</span>
+<span style="display:inline-block;width:36px;height:36px;background:rgba(168,85,247,0.15);border:1px solid rgba(168,85,247,0.3);border-radius:8px;color:#d8b4fe;font-size:14px;font-weight:700;line-height:36px;text-align:center;">O</span>
+<span style="display:inline-block;width:36px;height:36px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);border-radius:8px;color:#a5b4fc;font-size:14px;font-weight:700;line-height:36px;text-align:center;">N</span>
+<span style="display:inline-block;width:36px;height:36px;background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.3);border-radius:8px;color:#c084fc;font-size:14px;font-weight:700;line-height:36px;text-align:center;">Na</span>
+<span style="display:inline-block;width:36px;height:36px;background:rgba(168,85,247,0.15);border:1px solid rgba(168,85,247,0.3);border-radius:8px;color:#d8b4fe;font-size:14px;font-weight:700;line-height:36px;text-align:center;">Cl</span>
+</div>
+</div>'''
+        st.html(brand_html)
 
-        # ====== 登录卡片 ======
-        login_card = '''<div style="background: rgba(255,255,255,0.03); backdrop-filter: blur(20px); border: 1px solid rgba(139,92,246,0.2); border-radius: 20px; padding: 35px 40px; box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05); position: relative; z-index: 1;">
-            <div style="text-align: center; margin-bottom: 28px;">
-                <span style="font-size: 18px; font-weight: 600; color: rgba(255,255,255,0.95); letter-spacing: 4px;">教师登录</span>
-                <div style="width: 40px; height: 2px; background: linear-gradient(90deg, #6366f1, #8b5cf6); margin: 10px auto 0;"></div>
-            </div>'''
-        st.markdown(login_card, unsafe_allow_html=True)
+        # 登录标题
+        st.html('''<div style="text-align:center;margin-bottom:28px;position:relative;z-index:1;">
+<span style="font-size:18px;font-weight:600;color:rgba(255,255,255,0.95);letter-spacing:4px;">教师登录</span>
+<div style="width:40px;height:2px;background:linear-gradient(90deg,#6366f1,#8b5cf6);margin:10px auto 0;"></div>
+</div>''')
 
         # 输入框
-        st.markdown("<p style='color: #a5b4fc; margin: 0 0 6px 0; font-size: 14px; letter-spacing: 1px;'>👤 账号</p>", unsafe_allow_html=True)
+        st.html("<p style='color:#a5b4fc;margin:0 0 6px 0;font-size:14px;letter-spacing:1px;'>👤 账号</p>")
         username = st.text_input("", placeholder="请输入教师账号", label_visibility="collapsed")
 
-        st.markdown("<p style='color: #a5b4fc; margin: 16px 0 6px 0; font-size: 14px; letter-spacing: 1px;'>🔒 密码</p>", unsafe_allow_html=True)
+        st.html("<p style='color:#a5b4fc;margin:16px 0 6px 0;font-size:14px;letter-spacing:1px;'>🔒 密码</p>")
         password = st.text_input("", type="password", placeholder="请输入密码", label_visibility="collapsed")
 
-        st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
+        st.html("<div style='height:20px;'></div>")
 
         if st.button("登 录", type="primary", use_container_width=True):
             if username and password:
@@ -521,25 +482,22 @@ def show_login_page():
             else:
                 st.warning("请输入账号和密码")
 
-        st.markdown("</div>", unsafe_allow_html=True)
+        # 底部提示
+        st.html("<div style='height:20px;'></div>")
+        footer_html = '''<div style="background:rgba(99,102,241,0.08);border:1px solid rgba(139,92,246,0.15);border-radius:14px;padding:18px 24px;text-align:center;position:relative;z-index:1;">
+<p style="color:rgba(255,255,255,0.85);font-size:14px;margin:0;line-height:1.8;">
+<span style="color:#c084fc;">💡</span>
+<b style="color:rgba(255,255,255,0.95);">默认账号：</b><span style="color:#a5b4fc;">admin</span> / <span style="color:#a5b4fc;">admin123</span><br>
+<span style="color:rgba(255,255,255,0.5);font-size:13px;">首次登录后请及时修改密码</span>
+</p>
+</div>'''
+        st.html(footer_html)
 
-        # ====== 底部提示 ======
-        st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
-        
-        footer_html = '''<div style="background: rgba(99,102,241,0.08); border: 1px solid rgba(139,92,246,0.15); border-radius: 14px; padding: 18px 24px; text-align: center; position: relative; z-index: 1;">
-            <p style="color: rgba(255,255,255,0.85); font-size: 14px; margin: 0; line-height: 1.8;">
-                <span style="color: #c084fc;">💡</span>
-                <b style="color: rgba(255,255,255,0.95);">默认账号：</b><span style="color: #a5b4fc;">admin</span> / <span style="color: #a5b4fc;">admin123</span><br>
-                <span style="color: rgba(255,255,255,0.5); font-size: 13px;">首次登录后请及时修改密码</span>
-            </p>
-        </div>'''
-        st.markdown(footer_html, unsafe_allow_html=True)
+        # 学校信息
+        st.html("<div style='height:16px;'></div>")
+        st.html('<div style="text-align:center;color:rgba(255,255,255,0.35);font-size:13px;letter-spacing:1px;position:relative;z-index:1;">🧪 临澧县晟德高级中学 · 化学教研组 🧪</div>')
 
-        # ====== 底部学校信息 ======
-        st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
-        st.markdown('<div style="text-align: center; color: rgba(255,255,255,0.35); font-size: 13px; letter-spacing: 1px; position: relative; z-index: 1;">🧪 临澧县晟德高级中学 · 化学教研组 🧪</div>', unsafe_allow_html=True)
-
-    st.markdown("<div style='height: 8vh;'></div>", unsafe_allow_html=True)
+    st.html("<div style='height:8vh;'></div>")
 
 # ========== 辅助函数 ==========
 
