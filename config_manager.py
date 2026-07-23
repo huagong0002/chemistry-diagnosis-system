@@ -9,6 +9,13 @@ import json
 from pathlib import Path
 from typing import Dict, Optional
 
+# 尝试导入 streamlit（用于云部署时读取 secrets）
+try:
+    import streamlit as st
+    _has_streamlit = True
+except ImportError:
+    _has_streamlit = False
+
 # 配置文件路径
 CONFIG_DIR = Path(__file__).parent / "data"
 CONFIG_DIR.mkdir(exist_ok=True)
@@ -81,7 +88,7 @@ def load_config() -> Dict:
 
 def get_api_key(provider: str = None) -> str:
     """
-    获取API Key（优先从环境变量，其次从配置文件）
+    获取API Key（优先从 st.secrets(云部署)，其次环境变量，最后从配置文件）
     
     Args:
         provider: AI服务商
@@ -89,7 +96,17 @@ def get_api_key(provider: str = None) -> str:
     Returns:
         API Key
     """
-    # 优先从环境变量获取
+    # 最优先：从 st.secrets 读取（Streamlit Cloud 部署）
+    if _has_streamlit:
+        try:
+            key_name = f"{provider.upper()}_API_KEY" if provider else "DEEPSEEK_API_KEY"
+            secret_key = st.secrets.get(key_name, "")
+            if secret_key:
+                return secret_key
+        except Exception:
+            pass
+    
+    # 其次：从环境变量获取
     if provider == "qwen":
         key = os.getenv("QWEN_API_KEY", "")
         if key:
@@ -99,7 +116,7 @@ def get_api_key(provider: str = None) -> str:
         if key:
             return key
     
-    # 从配置文件获取
+    # 最后：从配置文件获取
     config = load_config()
     return config.get("api_key", "")
 

@@ -9,6 +9,13 @@ import requests
 from typing import Dict, List, Optional
 from config import AIConfig
 
+# 尝试导入 streamlit（用于云部署时读取 secrets）
+try:
+    import streamlit as st
+    _has_streamlit = True
+except ImportError:
+    _has_streamlit = False
+
 class AIService:
     """AI服务统一接口"""
     
@@ -21,11 +28,28 @@ class AIService:
             api_key: API密钥（可选，优先使用此参数）
         """
         self.provider = provider or os.getenv("AI_PROVIDER", "deepseek")
+        # 云部署优先读取 st.secrets 中的 provider
+        if _has_streamlit:
+            try:
+                self.provider = st.secrets.get("AI_PROVIDER", self.provider)
+            except Exception:
+                pass
         self.config = AIConfig.get_current_config(self.provider)
         
-        # API Key 优先级：直接传入 > 环境变量 > 配置文件 > AIConfig默认值
+        # API Key 优先级：直接传入 > st.secrets(云部署) > 环境变量 > 配置文件 > AIConfig默认值
         if api_key:
             self.api_key = api_key
+        elif _has_streamlit:
+            try:
+                # 从 st.secrets 读取（Streamlit Cloud 部署）
+                key_name = f"{self.provider.upper()}_API_KEY"
+                self.api_key = st.secrets.get(key_name, "")
+                if not self.api_key:
+                    # 尝试从 config_manager 获取
+                    from config_manager import get_api_key
+                    self.api_key = get_api_key(self.provider) or self.config.get("api_key", "")
+            except Exception:
+                self.api_key = self.config.get("api_key", "")
         else:
             # 尝试从配置管理模块读取
             try:
