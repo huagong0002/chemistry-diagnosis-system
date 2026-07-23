@@ -4,6 +4,7 @@ AI服务模块 - 支持通义千问、DeepSeek、Ollama等多种AI服务
 """
 
 import os
+import re
 import json
 import requests
 from typing import Dict, List, Optional
@@ -415,23 +416,152 @@ class AIService:
             print(f"[AI Service] API调用失败: {result}")
             return []
         
-        # 尝试解析JSON
+        # 尝试解析JSON（含多级容错）
+        json_str = result.strip()
+        
+        # 提取JSON块
+        if "```json" in json_str:
+            json_str = json_str.split("```json")[1].split("```")[0].strip()
+        elif "```" in json_str:
+            json_str = json_str.split("```")[1].split("```")[0].strip()
+        
+        # 尝试直接解析
         try:
-            if "```json" in result:
-                result = result.split("```json")[1].split("```")[0]
-            elif "```" in result:
-                result = result.split("```")[1].split("```")[0]
-            
-            data = json.loads(result.strip())
+            data = json.loads(json_str)
             questions = data.get("questions", [])
-            # 给每道题标注knowledge_point
             for q in questions:
                 if 'knowledge_point' not in q:
                     q['knowledge_point'] = target_knowledge
             return questions
-        except (json.JSONDecodeError, IndexError) as e:
-            print(f"[AI Service] JSON解析失败: {e}, 原始返回: {result[:200]}")
-            return []
+        except json.JSONDecodeError as je:
+            print(f"[AI Service] JSON直接解析失败: {je}")
+        
+        # 容错方案1：逐字符修复JSON字符串中的无效转义
+        # AI返回的JSON中LaTeX的 \ce{} \triangle 等反斜杠在JSON中是无效转义
+        # 策略：找出所有非法的 \X 转义，将 \ 替换为 \\
+        try:
+            # 列出JSON标准转义字符
+            json_valid_escapes = set('"\\/nrtbfu')
+            
+            # 遍历字符串，在JSON值内部修复非法转义
+            # 简化方案：将所有不在合法转义列表中的 \X 替换为 \\X
+            fixed_chars = []
+            i = 0
+            in_string = False
+            while i < len(json_str):
+                ch = json_str[i]
+                if ch == '"' and (i == 0 or json_str[i-1] != '\\'):
+                    in_string = not in_string
+                    fixed_chars.append(ch)
+                    i += 1
+                elif ch == '\\' and in_string and i + 1 < len(json_str):
+                    next_ch = json_str[i + 1]
+                    if next_ch in json_valid_escapes:
+                        # 合法转义，保持原样
+                        fixed_chars.append(ch)
+                        fixed_chars.append(next_ch)
+                        i += 2
+                    else:
+                        # 非法转义（如 \c, \S, \t 在非字符串位置，\O等），修复为 \\
+                        fixed_chars.append('\\\\')
+                        fixed_chars.append(next_ch)
+                        i += 2
+                else:
+                    fixed_chars.append(ch)
+                    i += 1
+            
+            fixed = ''.join(fixed_chars)
+            data = json.loads(fixed)
+            questions = data.get("questions", [])
+            for q in questions:
+                if 'knowledge_point' not in q:
+                    q['knowledge_point'] = target_knowledge
+            print(f"[AI Service] JSON转义修复后解析成功（逐字符修复方案）")
+            return questions
+        except (json.JSONDecodeError, Exception) as e:
+            print(f"[AI Service] JSON转义修复失败: {e}")
+        
+        # 容错方案2：暴力替换常见LaTeX模式
+        try:
+            # 将 \$\ce 替换为 $\\ce （常见AI返回格式）
+            fixed2 = json_str.replace('\\ce{', '\\\\ce{')
+            fixed2 = fixed2.replace('\\triangle', '\\\\triangle')
+            fixed2 = fixed2.replace('\\frac{', '\\\\frac{')
+            fixed2 = fixed2.replace('\\times', '\\\\times')
+            fixed2 = fixed2.replace('\\Rightarrow', '\\\\Rightarrow')
+            fixed2 = fixed2.replace('\\to', '\\\\to')
+            fixed2 = fixed2.replace('\\le', '\\\\le')  
+            fixed2 = fixed2.replace('\\ge', '\\\\ge')
+            fixed2 = fixed2.replace('\\ne', '\\\\ne')
+            fixed2 = fixed2.replace('\\approx', '\\\\approx')
+            fixed2 = fixed2.replace('\\infty', '\\\\infty')
+            fixed2 = fixed2.replace('\\mathrm{', '\\\\mathrm{')
+            fixed2 = fixed2.replace('\\left', '\\\\left')
+            fixed2 = fixed2.replace('\\right', '\\\\right')
+            fixed2 = fixed2.replace('\\hat{', '\\\\hat{')
+            fixed2 = fixed2.replace('\\vec{', '\\\\vec{')
+            data = json.loads(fixed2)
+            questions = data.get("questions", [])
+            for q in questions:
+                if 'knowledge_point' not in q:
+                    q['knowledge_point'] = target_knowledge
+            print(f"[AI Service] JSON暴力LaTeX修复后解析成功")
+            return questions
+        except (json.JSONDecodeError, Exception) as e:
+            print(f"[AI Service] JSON暴力修复失败: {e}")
+        
+        # 容错方案3：手动提取JSON对象并修复转义
+        try:
+            start = json_str.find('{')
+            if start >= 0:
+                depth = 0
+                end = start
+                for i in range(start, len(json_str)):
+                    if json_str[i] == '{':
+                        depth += 1
+                    elif json_str[i] == '}':
+                        depth -= 1
+                        if depth == 0:
+                            end = i + 1
+                            break
+                candidate = json_str[start:end]
+                # 对提取的JSON再次尝试修复
+                json_valid_escapes = set('"\\/nrtbfu')
+                fixed_chars = []
+                i = 0
+                in_string = False
+                while i < len(candidate):
+                    ch = candidate[i]
+                    if ch == '"' and (i == 0 or candidate[i-1] != '\\'):
+                        in_string = not in_string
+                        fixed_chars.append(ch)
+                        i += 1
+                    elif ch == '\\' and in_string and i + 1 < len(candidate):
+                        next_ch = candidate[i + 1]
+                        if next_ch in json_valid_escapes:
+                            fixed_chars.append(ch)
+                            fixed_chars.append(next_ch)
+                            i += 2
+                        else:
+                            fixed_chars.append('\\\\')
+                            fixed_chars.append(next_ch)
+                            i += 2
+                    else:
+                        fixed_chars.append(ch)
+                        i += 1
+                fixed = ''.join(fixed_chars)
+                data = json.loads(fixed)
+                questions = data.get("questions", [])
+                for q in questions:
+                    if 'knowledge_point' not in q:
+                        q['knowledge_point'] = target_knowledge
+                print(f"[AI Service] JSON手动提取+转义修复后解析成功")
+                return questions
+        except Exception as e:
+            print(f"[AI Service] 所有JSON解析方案均失败: {e}")
+            print(f"[AI Service] 原始返回前500字符: {json_str[:500]}")
+        
+        return []
     
     def generate_knowledge_report(self, knowledge_stats: Dict) -> str:
         """

@@ -2452,13 +2452,40 @@ elif page == "📚 练习推送":
                         )
                         
                         if questions:
+                            # 生成后立即存入题库（确保题库概览能显示）
+                            # 一次性查询已有题目，避免循环中重复查询
+                            existing_bank = db.get_bank_questions(knowledge_point=ai_knowledge, limit=1000)
+                            saved_bank_count = 0
+                            for q in questions:
+                                q_text = q.get('question_text', '')
+                                q_id = None
+                                for eq in existing_bank:
+                                    if q_text in eq.get('question_text', '') or eq.get('question_text', '') in q_text:
+                                        q_id = eq['id']
+                                        break
+                                
+                                if q_id is None:
+                                    # 新题目：存入题库，add_question_to_bank返回新ID
+                                    q_id = db.add_question_to_bank({
+                                        'question_text': q.get('question_text', ''),
+                                        'question_type': '选择题' if q.get('options') else '填空题',
+                                        'knowledge_point': ai_knowledge,
+                                        'difficulty': ai_difficulty,
+                                        'answer': q.get('answer', ''),
+                                        'options': q.get('options', []),
+                                        'explanation': q.get('explanation', '')
+                                    })
+                                    saved_bank_count += 1
+                                # 绑定bank_id，提交答案时直接用
+                                q['bank_id'] = q_id
+                            
                             # 初始化答题状态
                             st.session_state.practice_questions = questions
                             st.session_state.student_answers = {}
                             st.session_state.submitted = False
                             st.session_state.current_question_idx = 0
                             st.session_state.practice_mode = "AI生成"
-                            st.success(f"✅ 生成了 {len(questions)} 道练习题！")
+                            st.success(f"✅ 生成了 {len(questions)} 道练习题！已自动存入题库({saved_bank_count}道新题)")
                             
                             # 生成后立即提供导出选项
                             st.info("💡 您可以在线答题，也可以导出题目打印给学生练习")
@@ -2549,12 +2576,44 @@ elif page == "📚 练习推送":
                                         st.warning(f"生成 {kp} 题目失败: {str(e)}")
                                 
                                 if all_questions:
+                                    # 生成后立即存入题库（确保题库概览能显示）
+                                    # 按知识点分组查询已有题目，减少数据库查询次数
+                                    kp_cache = {}
+                                    saved_bank_count = 0
+                                    for q in all_questions:
+                                        kp_name = q.get('knowledge_point', '')
+                                        # 缓存每个知识点的已有题目
+                                        if kp_name not in kp_cache:
+                                            kp_cache[kp_name] = db.get_bank_questions(knowledge_point=kp_name, limit=1000)
+                                        existing = kp_cache[kp_name]
+                                        
+                                        q_id = None
+                                        q_text = q.get('question_text', '')
+                                        for eq in existing:
+                                            if q_text in eq.get('question_text', '') or eq.get('question_text', '') in q_text:
+                                                q_id = eq['id']
+                                                break
+                                        
+                                        if q_id is None:
+                                            q_id = db.add_question_to_bank({
+                                                'question_text': q.get('question_text', ''),
+                                                'question_type': '选择题' if q.get('options') else '填空题',
+                                                'knowledge_point': kp_name,
+                                                'difficulty': weak_difficulty,
+                                                'answer': q.get('answer', ''),
+                                                'options': q.get('options', []),
+                                                'explanation': q.get('explanation', '')
+                                            })
+                                            saved_bank_count += 1
+                                        # 绑定bank_id
+                                        q['bank_id'] = q_id
+                                    
                                     st.session_state.practice_questions = all_questions
                                     st.session_state.student_answers = {}
                                     st.session_state.submitted = False
                                     st.session_state.current_question_idx = 0
                                     st.session_state.practice_mode = "针对诊断"
-                                    st.success(f"✅ 生成了 {len(all_questions)} 道针对性练习题！")
+                                    st.success(f"✅ 生成了 {len(all_questions)} 道针对性练习题！已自动存入题库({saved_bank_count}道新题)")
                                     
                                     # 生成后立即提供导出选项
                                     st.info("💡 您可以在线答题，也可以导出题目打印给学生练习")
@@ -2827,7 +2886,7 @@ elif page == "📚 练习推送":
                         bank_id = q.get('bank_id')
                         
                         if bank_id:
-                            # 直接使用题库中的题目ID
+                            # 直接使用题库中的题目ID（包括AI生成已存入题库的）
                             db.add_practice_record(
                                 student_id=selected_student_id,
                                 question_id=bank_id,
@@ -2837,20 +2896,19 @@ elif page == "📚 练习推送":
                             )
                             saved_count += 1
                         else:
-                            # AI生成模式：先存入题库再保存记录
+                            # 兜底：如果没有bank_id，先存入题库再保存记录
                             existing_questions = db.get_bank_questions(
                                 knowledge_point=knowledge_point,
                                 limit=1000
                             )
-                            # 简单匹配：题目文本相同则认为已存在
                             q_id = None
+                            q_text = q.get('question_text', '')
                             for eq in existing_questions:
-                                if q.get('question_text', '') in eq.get('question_text', '') or eq.get('question_text', '') in q.get('question_text', ''):
+                                if q_text in eq.get('question_text', '') or eq.get('question_text', '') in q_text:
                                     q_id = eq['id']
                                     break
                             
                             if q_id is None:
-                                # 存入题库
                                 q_id = db.add_question_to_bank({
                                     'question_text': q.get('question_text', ''),
                                     'question_type': '选择题' if q.get('options') else '填空题',
@@ -2861,7 +2919,6 @@ elif page == "📚 练习推送":
                                     'explanation': q.get('explanation', '')
                                 })
                             
-                            # 保存练习记录
                             db.add_practice_record(
                                 student_id=selected_student_id,
                                 question_id=q_id,
