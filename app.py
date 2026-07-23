@@ -31,6 +31,7 @@ def get_kp():
 from database import db
 from models import Student, Question, StudentAnswer, ErrorDiagnosis
 from ai_service import get_ai_service
+import ai_service as _ai_module
 
 # ========== LaTeX渲染辅助函数 ==========
 import re
@@ -674,6 +675,8 @@ def init_ai_service():
     """初始化AI服务"""
     if st.session_state.ai_service is None:
         try:
+            # 重置全局缓存，确保读取最新配置
+            _ai_module._ai_service = None
             st.session_state.ai_service = get_ai_service()
             # 测试连接
             result = st.session_state.ai_service.test_connection()
@@ -2461,7 +2464,8 @@ elif page == "📚 练习推送":
                             st.info("💡 您可以在线答题，也可以导出题目打印给学生练习")
                             show_export_buttons(questions, selected_student_name, "ai")
                         else:
-                            st.warning("未能生成练习题，请稍后重试或检查AI配置")
+                            st.warning("未能生成练习题，请稍后重试")
+                            st.info("💡 可能原因：1) AI服务未配置API Key 2) 网络连接异常 3) API额度不足。请到【系统设置】检查AI配置。")
                     
                     except Exception as e:
                         st.error(f"生成失败: {str(e)}")
@@ -4082,10 +4086,9 @@ elif page == "⚙️ 系统设置":
 
     st.markdown("##### AI服务配置")
     
-    # 加载当前配置
-    current_config = load_config()
-    current_provider = current_config.get("provider", "deepseek")
-    current_api_key = current_config.get("api_key", "")
+    # 加载当前配置（使用 get_provider/get_api_key 确保 st.secrets 优先）
+    current_provider = get_provider()
+    current_api_key = get_api_key(current_provider)
     
     provider = st.selectbox(
         "选择AI服务商",
@@ -4121,8 +4124,9 @@ elif page == "⚙️ 系统设置":
                 if success:
                     st.success("✅ 配置已保存！")
                     st.info("配置已保存到本地文件，重启系统后仍然有效。")
-                    # 重新初始化AI服务
+                    # 重新初始化AI服务（同时重置全局缓存）
                     st.session_state.ai_service = None
+                    _ai_module._ai_service = None
                 else:
                     st.error("❌ 保存失败，请检查权限")
             else:
@@ -4134,6 +4138,7 @@ elif page == "⚙️ 系统设置":
             clear_config()
             st.success("配置已清除")
             st.session_state.ai_service = None
+            _ai_module._ai_service = None
     
     st.markdown("---")
     st.markdown("### 连接测试")

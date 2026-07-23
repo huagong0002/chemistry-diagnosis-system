@@ -127,12 +127,21 @@ def get_provider() -> str:
     Returns:
         服务商名称
     """
-    # 优先从环境变量获取
+    # 最优先：从 st.secrets 读取（Streamlit Cloud 部署）
+    if _has_streamlit:
+        try:
+            secret_provider = st.secrets.get("AI_PROVIDER", "")
+            if secret_provider:
+                return secret_provider
+        except Exception:
+            pass
+    
+    # 其次：从环境变量获取
     provider = os.getenv("AI_PROVIDER", "")
     if provider:
         return provider
     
-    # 从配置文件获取
+    # 最后：从配置文件获取
     config = load_config()
     return config.get("provider", "deepseek")
 
@@ -159,9 +168,8 @@ def test_config() -> Dict:
     Returns:
         测试结果字典
     """
-    config = load_config()
-    provider = config.get("provider", "deepseek")
-    api_key = config.get("api_key", "")
+    provider = get_provider()
+    api_key = get_api_key(provider)
     
     if not api_key:
         return {

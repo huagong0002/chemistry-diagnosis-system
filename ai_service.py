@@ -36,30 +36,27 @@ class AIService:
                 pass
         self.config = AIConfig.get_current_config(self.provider)
         
-        # API Key 优先级：直接传入 > st.secrets(云部署) > 环境变量 > 配置文件 > AIConfig默认值
+        # API Key 优先级：直接传入 > st.secrets(云部署) > 配置文件 > 环境变量 > AIConfig默认值
         if api_key:
             self.api_key = api_key
-        elif _has_streamlit:
-            try:
-                # 从 st.secrets 读取（Streamlit Cloud 部署）
-                key_name = f"{self.provider.upper()}_API_KEY"
-                self.api_key = st.secrets.get(key_name, "")
-                if not self.api_key:
-                    # 尝试从 config_manager 获取
-                    from config_manager import get_api_key
-                    self.api_key = get_api_key(self.provider) or self.config.get("api_key", "")
-            except Exception:
-                self.api_key = self.config.get("api_key", "")
         else:
-            # 尝试从配置管理模块读取
-            try:
-                from config_manager import get_api_key
-                saved_key = get_api_key(self.provider)
-                if saved_key:
-                    self.api_key = saved_key
-                else:
-                    self.api_key = self.config.get("api_key", "")
-            except ImportError:
+            self.api_key = ""
+            # 1. 尝试从 st.secrets 读取（Streamlit Cloud 部署）
+            if _has_streamlit:
+                try:
+                    key_name = f"{self.provider.upper()}_API_KEY"
+                    self.api_key = st.secrets.get(key_name, "") or ""
+                except Exception:
+                    pass
+            # 2. 尝试从配置管理模块读取（本地配置文件 user_config.json）
+            if not self.api_key:
+                try:
+                    from config_manager import get_api_key
+                    self.api_key = get_api_key(self.provider) or ""
+                except Exception:
+                    pass
+            # 3. 最后从 AIConfig 默认值获取（环境变量）
+            if not self.api_key:
                 self.api_key = self.config.get("api_key", "")
         
         self.base_url = self.config["base_url"]
@@ -100,7 +97,14 @@ class AIService:
                 timeout=60
             )
             response.raise_for_status()
-            return response.json()
+            result = response.json()
+            # 检查API返回的错误信息
+            if "error" in result and "choices" not in result:
+                error_msg = result.get("error", {})
+                if isinstance(error_msg, dict):
+                    error_msg = error_msg.get("message", str(error_msg))
+                return {"error": str(error_msg), "choices": [{"message": {"content": ""}}]}
+            return result
         except requests.exceptions.RequestException as e:
             return {"error": str(e), "choices": [{"message": {"content": ""}}]}
     
@@ -189,6 +193,12 @@ class AIService:
             )
             response.raise_for_status()
             result = response.json()
+            # 检查API返回的错误信息
+            if "error" in result and "choices" not in result:
+                error_msg = result.get("error", {})
+                if isinstance(error_msg, dict):
+                    error_msg = error_msg.get("message", str(error_msg))
+                return f"请求失败: {str(error_msg)}"
             return result.get("choices", [{}])[0].get("message", {}).get("content", "")
         except requests.exceptions.RequestException as e:
             return f"请求失败: {str(e)}"
@@ -248,6 +258,16 @@ class AIService:
 请分析学生答案的错误原因，并严格从5种错误类型中选择最匹配的一项。"""
         
         result = self.chat(user_prompt, system_prompt)
+        
+        # 检查API调用是否失败
+        if result.startswith("请求失败:"):
+            return {
+                "error_type": "AI服务异常",
+                "error_type_code": "api_error",
+                "diagnosis_detail": f"AI服务调用失败: {result}",
+                "knowledge_gaps": [knowledge_point],
+                "suggestion": "请检查AI服务配置和网络连接"
+            }
         
         # 尝试解析JSON
         try:
@@ -390,6 +410,11 @@ class AIService:
         
         result = self.chat(user_prompt, system_prompt)
         
+        # 检查API调用是否失败
+        if result.startswith("请求失败:"):
+            print(f"[AI Service] API调用失败: {result}")
+            return []
+        
         # 尝试解析JSON
         try:
             if "```json" in result:
@@ -404,7 +429,8 @@ class AIService:
                 if 'knowledge_point' not in q:
                     q['knowledge_point'] = target_knowledge
             return questions
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, IndexError) as e:
+            print(f"[AI Service] JSON解析失败: {e}, 原始返回: {result[:200]}")
             return []
     
     def generate_knowledge_report(self, knowledge_stats: Dict) -> str:
@@ -482,8 +508,12 @@ class AIService:
             测试结果
         """
         try:
-            response = self.chat("你好，请回复'连接成功'。")
-            if "成功" in response or "成功" in response:
+            response = self.chat("你好，请回复'连接成功'四个字。")
+            # 判断是否请求失败
+            if response.startswith("请求失败:"):
+                return {"success": False, "message": f"{self.provider} 服务连接失败: {response}"}
+            # 判断是否包含"成功"且不包含"失败"
+            if "成功" in response and "失败" not in response:
                 return {"success": True, "message": f"{self.provider} 服务连接正常"}
             else:
                 return {"success": False, "message": f"{self.provider} 服务响应异常: {response}"}

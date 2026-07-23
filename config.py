@@ -52,17 +52,48 @@ class AIConfig:
     # 当前使用的配置（可切换）
     @classmethod
     def get_current_config(cls, provider=None):
-        """获取当前AI配置"""
+        """获取当前AI配置（动态读取环境变量，确保运行时最新）"""
         if provider is None:
-            provider = os.getenv("AI_PROVIDER", "qwen")
+            provider = os.getenv("AI_PROVIDER", "deepseek")
         
-        configs = {
-            "qwen": cls.QWEN_CONFIG,
-            "deepseek": cls.DEEPSEEK_CONFIG,
-            "ollama": cls.OLLAMA_CONFIG
-        }
-        
-        return configs.get(provider, cls.QWEN_CONFIG)
+        # 动态构建配置，确保读取最新的环境变量
+        if provider == "qwen":
+            return {
+                "provider": "qwen",
+                "api_key": os.getenv("QWEN_API_KEY", ""),
+                "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+                "model": "qwen-plus",
+                "max_tokens": 2000,
+                "temperature": 0.7
+            }
+        elif provider == "deepseek":
+            return {
+                "provider": "deepseek",
+                "api_key": os.getenv("DEEPSEEK_API_KEY", ""),
+                "base_url": "https://api.deepseek.com/v1",
+                "model": "deepseek-chat",
+                "max_tokens": 2000,
+                "temperature": 0.7
+            }
+        elif provider == "ollama":
+            return {
+                "provider": "ollama",
+                "api_key": "",
+                "base_url": os.getenv("OLLAMA_URL", "http://localhost:11434/v1"),
+                "model": os.getenv("OLLAMA_MODEL", "qwen2.5:7b"),
+                "max_tokens": 2000,
+                "temperature": 0.7
+            }
+        else:
+            # 默认返回 deepseek 配置
+            return {
+                "provider": "deepseek",
+                "api_key": os.getenv("DEEPSEEK_API_KEY", ""),
+                "base_url": "https://api.deepseek.com/v1",
+                "model": "deepseek-chat",
+                "max_tokens": 2000,
+                "temperature": 0.7
+            }
 
 # ========== 高一化学知识点库 ==========
 # 默认知识点库（内置）
