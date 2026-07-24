@@ -175,7 +175,7 @@ def render_latex_html(text: str, font_size: str = "17px", line_height: str = "1.
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 <style>
     body {{
-        font-family: -apple-system, "Microsoft YaHei", "PingFang SC", sans-serif;
+        font-family: "Noto Sans CJK SC", -apple-system, "Microsoft YaHei", "PingFang SC", "WenQuanYi Micro Hei", sans-serif;
         font-size: {font_size};
         line-height: {line_height};
         color: #1a1a1a;
@@ -2152,8 +2152,14 @@ elif page == "📊 诊断报告":
                             with col_ec1:
                                 st.markdown("**错因分布：**")
                                 try:
+                                    import matplotlib
                                     import matplotlib.pyplot as plt
-                                    plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'Arial Unicode MS']
+                                    # 重建字体管理器缓存，确保加载最新可用字体（兼容新旧版本matplotlib）
+                                    try:
+                                        matplotlib.font_manager._rebuild()
+                                    except AttributeError:
+                                        matplotlib.font_manager.fontManager.__init__()
+                                    plt.rcParams['font.sans-serif'] = ['Noto Sans CJK SC', 'SimHei', 'Microsoft YaHei', 'Arial Unicode MS', 'WenQuanYi Micro Hei', 'DejaVu Sans']
                                     plt.rcParams['axes.unicode_minus'] = False
                                     
                                     fig1, ax1 = plt.subplots(figsize=(3.5, 3.5))
@@ -2194,7 +2200,7 @@ elif page == "📊 诊断报告":
                                     
                                     try:
                                         import matplotlib.pyplot as plt
-                                        plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'Arial Unicode MS']
+                                        plt.rcParams['font.sans-serif'] = ['Noto Sans CJK SC', 'SimHei', 'Microsoft YaHei', 'Arial Unicode MS', 'WenQuanYi Micro Hei', 'DejaVu Sans']
                                         plt.rcParams['axes.unicode_minus'] = False
                                         
                                         kp_names = [k for k, v in sorted_kc]
